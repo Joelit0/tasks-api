@@ -81,7 +81,7 @@ app.get(taskUrl, (req, res) => {
 
 // app.patch(taskUrl, null);
 app.patch(taskUrl, (req, res) => {
-  const userId: string = req.params.id;
+  const userId: string = req.params.user_id;
   const user = findUser(userId, res);
 
   if (req.body){
