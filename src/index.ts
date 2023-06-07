@@ -69,7 +69,6 @@ app.post(tasksUrl, (req, res) => {
 // Task by id
 
 // app.get(taskUrl, null);
-
 app.get(taskUrl, (req, res) => {
   const userId: string = req.params.user_id;
   const taskId: string = req.params.task_id;
@@ -81,6 +80,25 @@ app.get(taskUrl, (req, res) => {
 
 
 // app.patch(taskUrl, null);
+app.patch(taskUrl, (req, res) => {
+  const userId: string = req.params.id;
+  const user = findUser(userId, res);
+
+  if (req.body){
+    const task : Task = req.body;
+
+    const taskToModify = user.tasks.findIndex(t => t.id === task.id)
+
+    if (taskToModify !==-1){
+      user.tasks[taskToModify] = task;
+      res.send({ 'status':200, 'task':task });
+    }
+
+    else {
+      res.send({ 'status':400, 'message': 'Empty request body' });
+    }
+  }
+});
 
 // app.delete(taskUrl, null);
 
