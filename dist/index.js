@@ -54,11 +54,31 @@ app.post(tasksUrl, (req, res) => {
 });
 // Task by id
 // app.get(taskUrl, null);
+app.get(taskUrl, (req, res) => {
+    const userId = req.params.user_id;
+    const taskId = req.params.task_id;
+    const tasks = findUser(userId, res).tasks;
+    const taskById = tasks.find((task) => task.id === taskId);
+    res.send({ 'status': 200, 'task': taskById });
+});
 // app.patch(taskUrl, null);
 // app.delete(taskUrl, null);
 // Users
 // app.post(usersUrl, null);
+app.post(usersUrl, (req, res) => {
+    if (req.body) {
+        const user = req.body;
+        users.push(user);
+        res.send({ 'status': 201, 'user': user });
+    }
+    res.send(req.body + "hola");
+    res.send({ 'status': 400, 'message': 'Empty request body' });
+});
 // User by id
-// app.get(userUrl, null);
+app.get(userUrl, (req, res) => {
+    const userId = req.params.id;
+    const user = findUser(userId, res);
+    res.send({ 'status': 200, 'user': user });
+});
 app.listen(port, null);
 //# sourceMappingURL=index.js.map
