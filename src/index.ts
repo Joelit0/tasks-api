@@ -1,124 +1,50 @@
-import { Task } from './interfaces/task'
-import { User } from './interfaces/user'
-import users from '../userData';
-
-import express from 'express';
-import bodyParser from 'body-parser';
+import { Request, Response } from "express";
+import cookieParser from "cookie-parser";
+import express from "express";
+import bodyParser from "body-parser";
+import jwt from "jsonwebtoken";
+import fs from "fs";
+import { expressjwt } from "express-jwt";
+import jwksRsa from "jwks-rsa";
 import cors from 'cors';
 
+
 const app = express();
-const port = 3000;
 
-const tasksUrl = '/users/:id/tasks';
-const taskUrl = '/users/:user_id/tasks/:task_id';
-const usersUrl = '/users';
-const userUrl = '/users/:id';
-
+app.use(cookieParser());
 app.use(cors());
-
-app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const findUser = (userId: string, res: any) => {
-  const user: User = users.find((currentUser) => currentUser.id === userId);
+app.route("/api/login").post(loginRoute);
 
-  if (!user) res.send({ 'status': 404, 'message': 'User not found'});
+const RSA_PRIVATE_KEY = fs.readFileSync("src/private.key");
 
-  return user;
-};
-
-// Tasks
-
-app.get(tasksUrl, (req, res) => {
-  const userId: string = req.params.id;
-  const tasks: Task[] = findUser(userId, res).tasks;
-
-  res.send({ 'status': 200, 'tasks': tasks });
+const checkIfAuthenticated = expressjwt({
+  secret: "secret",
+  algorithms: ["RS256"],
 });
 
-app.post(tasksUrl, (req, res) => {
-  const userId: string = req.params.id;
-  const user = findUser(userId, res);
+app.route("/api/lessons").get(checkIfAuthenticated); // readAllLessons
 
-  if (req.body) {
-    const task: Task = req.body;
+export function loginRoute(req: express.Request, res: express.Response) {
+  const email = req.body.email;
+  const password = req.body.password;
 
-    user.tasks.push(task);
+  if (true) {
+    /*validateEmailAndPassword()*/
+    const userId = "123"; /*findUserIdForEmail(email)*/
 
-    res.send({ 'status': 201, 'task': task });
+    const jwtBearerToken = jwt.sign({}, RSA_PRIVATE_KEY, {
+      algorithm: "RS256",
+      expiresIn: 120,
+      subject: userId,
+    });
+
+    res.cookie("SESSIONID", jwtBearerToken, { httpOnly: false, secure: false });
+    res.status(200);
+  } else {
+    res.sendStatus(401);
   }
+}
 
-  res.send({ 'status': 400, 'message': 'Empty request body' })
-});
-
-// Task by id
-
-// app.get(taskUrl, null);
-app.get(taskUrl, (req, res) => {
-  const userId: string = req.params.user_id;
-  const taskId: string = req.params.task_id;
-  const tasks: Task[] = findUser(userId, res).tasks;
-  const taskById: Task = tasks.find((task: Task) => task.id === taskId);
-
-  res.send({ 'status': 200, 'task': taskById });
-});
-
-
-// app.patch(taskUrl, null);
-app.patch(taskUrl, (req, res) => {
-  const userId: string = req.params.user_id;
-  const user = findUser(userId, res);
-
-  if (req.body){
-    const task : Task = req.body;
-
-    const taskToModify = user.tasks.findIndex(t => t.id === task.id)
-
-    if (taskToModify !==-1){
-      user.tasks[taskToModify] = task;
-      res.send({ 'status':200, 'task':task });
-    }
-
-    else {
-      res.send({ 'status':400, 'message': 'Empty request body' });
-    }
-  }
-});
-
-// app.delete(taskUrl, null);
-
-// Users
-
-// app.post(usersUrl, null);
-
-app.post(usersUrl, (req, res) => {
-  if (req.body) {
-    const user: User = {
-      id: "",
-      username: "",
-      password: "",
-      tasks: [],
-    };
-
-    user.id = req.body.id;
-    user.username = req.body.username;
-    user.password = req.body.password;
-    user.tasks = req.body.tasks;
-
-    users.push(user);
-
-    res.send({ 'status': 201, 'user': user });
-  }
-  res.send({ 'status': 400, 'message': 'Empty request body' })
-});
-
-// User by id
-
-app.get(userUrl, (req, res) => {
-  const userId: string = req.params.id;
-  const user: User = findUser(userId, res);
-
-  res.send({ 'status': 200, 'user': user });
-});
-
-app.listen(port, null);
+app.listen(3000);
